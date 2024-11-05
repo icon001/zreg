@@ -1,6 +1,6 @@
 object MainForm: TMainForm
-  Left = 179
-  Top = 77
+  Left = 182
+  Top = 133
   AutoScroll = False
   BorderIcons = [biSystemMenu, biMinimize, biMaximize, biHelp]
   Caption = #51228#47200' '#49884#49828#53596' '#51109#48708' '#46321#47197' '#54532#47196#44536#47016' [Ver 0.2]'
@@ -1299,7 +1299,7 @@ object MainForm: TMainForm
               Font.Height = -12
               Font.Name = #44404#47548
               Font.Style = []
-              PageIndex = 1
+              PageIndex = 13
               ParentFont = False
               TabOrder = 1
               OnPageChanged = Notebook1PageChanged
@@ -7419,6 +7419,17 @@ object MainForm: TMainForm
                           E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8
                           E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8}
                         NumGlyphs = 2
+                      end
+                      object chkCRBLERetry: TCheckBox
+                        Left = 713
+                        Top = 36
+                        Width = 73
+                        Height = 17
+                        Caption = 'Retry'
+                        Checked = True
+                        State = cbChecked
+                        TabOrder = 5
+                        OnClick = chk_BLEVersionClick
                       end
                     end
                     object TabSheet23: TTabSheet
@@ -32750,7 +32761,7 @@ object MainForm: TMainForm
                   Top = 0
                   Width = 1338
                   Height = 512
-                  ActivePage = TabSheet12
+                  ActivePage = TabSheet17
                   Align = alClient
                   TabOrder = 1
                   object TabSheet12: TTabSheet

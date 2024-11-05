@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=1
 MinorVer=7
 Release=2
-Build=267
+Build=268
 Debug=1
 PreRelease=1
 Special=1
@@ -126,7 +126,7 @@ CodePage=949
 [Version Info Keys]
 CompanyName=
 FileDescription=제론시스템 장비 등록 프로그램
-FileVersion=1.7.2.267
+FileVersion=1.7.2.268
 InternalName=
 LegalCopyright=
 LegalTrademarks=

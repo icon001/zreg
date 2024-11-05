@@ -57,6 +57,7 @@ type CString = string[100];
   Function DataConvert1(aMakeValue:Byte;aData:String):String;
   Function DataConvert2(aMakeValue:Byte;aData:String):String;
   function EncodeData(aKey:Byte; aData: String): String;
+  function ExtractNumbers(const Text: string): string;
   function ToHexStr(st:string;aSpace:Boolean=True):String;
   function ToHexStrNoSpace(st:string):String;
   function Hex2Ascii(St: String): String;
@@ -939,6 +940,18 @@ begin
     0: Result:= DataConvert1(aMakeValue,aData);
     1: Result:= DataConvert2(aMakeValue,aData);
     else Result:= aData;
+  end;
+end;
+
+function ExtractNumbers(const Text: string): string;
+var
+  CharIndex: Integer;
+begin
+  Result := '';
+  for CharIndex := 1 to Length(Text) do
+  begin
+    if IsDigit(Text[CharIndex]) then
+      Result := Result + Text[CharIndex];
   end;
 end;
 

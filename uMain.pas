@@ -3953,6 +3953,7 @@ type
     Label_PortViewState: TLabel;
     Button25: TButton;
     panRemote3: TPanel;
+    chkCRBLERetry: TCheckBox;
     procedure RzGroup2ItemsClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Notebook1PageChanged(Sender: TObject);
@@ -4703,6 +4704,7 @@ type
     procedure KTT811FirmWareFileLoad(aFileName:string);
     procedure MacSelect;
     procedure SetBROADCLIENTPORT(const Value: integer);
+    procedure TestDataSendProcess;
   private
     L_bICU300FirmwareCancel : Boolean;
     FirmwareDownLoadList_GCU300 : TStringList;
@@ -4843,11 +4845,11 @@ type
     Procedure CheckUsedAlarmDisplay(aDeviceID: String);
     Procedure CheckID(aDeviceID: String);
     Procedure CheckCR(aDeviceID: String; aReaderNo: Integer);
-    Procedure CheckCRBLEBootVer(aDeviceID: String; aReaderNo: Integer);
-    Procedure CheckCRBLEVer(aDeviceID: String; aReaderNo: Integer);
-    Procedure CheckCRBLECustomID(aDeviceID: String; aReaderNo: Integer);
+    Procedure CheckCRBLEBootVer(aDeviceID: String; aReaderNo: Integer; bRetry:Boolean=True);
+    Procedure CheckCRBLEVer(aDeviceID: String; aReaderNo: Integer;bRetry:Boolean=True);
+    Procedure CheckCRBLECustomID(aDeviceID: String; aReaderNo: Integer;bRetry:Boolean=True);
     Procedure SetCRBLECustomID(aDeviceID: String; aReaderNo: Integer);
-    Procedure CheckCRBLERssi(aDeviceID: String; aReaderNo: Integer);
+    Procedure CheckCRBLERssi(aDeviceID: String; aReaderNo: Integer;bRetry:Boolean=True);
     Procedure SetCRBLERssi(aDeviceID: String; aReaderNo: Integer);
     Procedure CheckSysInfo(aDeviceID: String);
     procedure CheckDoorArea(aDeviceID: String);
@@ -11552,7 +11554,7 @@ begin
 end;
 
 // CardReader BLE Bootloader Version 전송
-Procedure TMainForm.CheckCRBLEBootVer(aDeviceID: String; aReaderNo: Integer);
+Procedure TMainForm.CheckCRBLEBootVer(aDeviceID: String; aReaderNo: Integer; bRetry:Boolean=True);
 var
   ReaderNoStr:String;
   nLoop : integer;
@@ -11577,7 +11579,7 @@ begin
       G_bDeviceResponse[conBLEBootVer] := False;
       SendPacket(aDeviceID,'R','B076C'+ReaderNoStr,Sent_Ver);
       bResult := ResponseCheck(conBLEBootVer,G_nDelayTime);
-      if bResult then break;
+      if bResult or (Not bRetry) then break;
     end;
 
   end else
@@ -11589,7 +11591,7 @@ end;
 
 
 // CardReader BLE Version 전송
-Procedure TMainForm.CheckCRBLEVer(aDeviceID: String; aReaderNo: Integer);
+Procedure TMainForm.CheckCRBLEVer(aDeviceID: String; aReaderNo: Integer;bRetry:Boolean=True);
 var
   ReaderNoStr:String;
   nLoop : integer;
@@ -11614,7 +11616,7 @@ begin
       G_bDeviceResponse[conBLEVer] := False;
       SendPacket(aDeviceID,'R','B079C'+ReaderNoStr,Sent_Ver);
       bResult := ResponseCheck(conBLEVer,G_nDelayTime);
-      if bResult then break;
+      if bResult or (Not bRetry) then break;
     end;
 
 
@@ -11627,7 +11629,7 @@ end;
 
 // CardReader BLE CustomID 조회 전송  (B004)
 // CardReader BLE CustomID 전송
-Procedure TMainForm.CheckCRBLECustomID(aDeviceID: String; aReaderNo: Integer);
+Procedure TMainForm.CheckCRBLECustomID(aDeviceID: String; aReaderNo: Integer;bRetry:Boolean=True);
 var
   ReaderNoStr:String;
   nLoop : integer;
@@ -11654,9 +11656,8 @@ begin
       SendPacket(aDeviceID,'R','B004C'+ReaderNoStr,Sent_Ver);
       bResult := ResponseCheck(conBLECustomID,G_nDelayTime);
 
-      if bResult then
+      if bResult or (Not bRetry) then
       begin
-
         break;
       end;
       
@@ -11730,7 +11731,7 @@ end;
 
 // CardReader BLE Rssi 조회 전송  (B002)
 // CardReader BLE Rssi 전송
-Procedure TMainForm.CheckCRBLERssi(aDeviceID: String; aReaderNo: Integer);
+Procedure TMainForm.CheckCRBLERssi(aDeviceID: String; aReaderNo: Integer;bRetry:Boolean=True);
 var
   ReaderNoStr:String;
   nLoop : integer;
@@ -11755,7 +11756,7 @@ begin
       G_bDeviceResponse[conBLERssi] := False;
       SendPacket(aDeviceID,'R','B002C'+ReaderNoStr,Sent_Ver);
       bResult := ResponseCheck(conBLERssi,G_nDelayTime);
-      if bResult then break;
+      if bResult or (Not bRetry) then break;
     end;
 
   end else
@@ -25291,6 +25292,7 @@ begin
     showmessage('전송 딜레이 시간이 잘못 되었습니다.');
     Exit;
   end;
+  TestDataSendProcess;
   btn_TestDataSend.Enabled := False;
   btn_TestSendCancel.Enabled := True;
   TestDataSendTimer.Enabled := False;
@@ -25299,122 +25301,8 @@ begin
 end;
 
 procedure TMainForm.TestDataSendTimerTimer(Sender: TObject);
-var
-  stEcuID : string;
-  cCmd : char;
-  stData : string;
-  stDeviceID : string;
-  i : integer;
-  chkBox : TCheckBox;
-  edCmd : TRzEdit;
-  edData : TRzEdit;
-  edCount : TRzEdit;
-  edCurrentCount : TRzEdit;
-  bSend : Boolean;
 begin
-  if L_nCurrentTestNextSendCount > 10 then L_nCurrentTestNextSendCount := 1;
-
-  bSend := False;
-
-  for i := L_nCurrentTestNextSendCount to 10 do
-  begin
-
-    //통신 연결이 되지않아 전송을 취소하고 종료한다.
-    if not WinsockPort.Open then
-    begin
-      btn_TestDataSend.Enabled := True;
-      btn_TestSendCancel.Enabled := False;
-      TestDataSendTimer.Enabled := False;
-
-      ShowMessageBox('통신 연결이 안되었습니다.');
-      Exit;
-    end;
-
-    chkBox := TravelCheckBoxItem(TGroupBox(gb_testData),'chk_TestData',i);
-    if chkBox = nil then continue;
-    if chkBox.Checked then
-    begin
-      edCmd := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataCmd',i);
-      edData := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestData',i);
-      edCount := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataSendCnt',i);
-      edCurrentCount := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataCurrentCnt',i);
-
-      if edCmd = nil then continue;
-      if edData = nil then continue;
-      if edCount = nil then continue;
-      if edCurrentCount = nil then continue;
-
-      if Not(isdigit(edCount.Text)) then continue;
-      if Not(isdigit(edCurrentCount.Text)) then continue;
-      if strtoint(edCurrentCount.Text) >= strtoint(edCount.Text) then continue;
-
-      edCurrentCount.Text := inttostr(strtoint(edCurrentCount.Text) + 1);
-      
-      cCmd := edCmd.text[1];
-      stDeviceID := Edit_CurrentID.Text + ComboBox_IDNO.Text;
-      SendPacket(stDeviceID,cCmd,edData.Text,Sent_Ver);
-      L_nCurrentTestNextSendCount := i + 1;
-      bSend := True;
-      break;
-    end;
-  end;
-
-  if Not bSend then
-  begin
-    if L_nCurrentTestNextSendCount = 1 then  //전체 모두전송 한 경우
-    begin
-      TestDataSendTimer.Enabled := False;
-      btn_TestDataSend.Enabled := False;
-    end else   // 하나 체크한경우
-    begin
-      L_nCurrentTestNextSendCount := 1; //처음부터 다시 한번 체크 해 보자.
-      for i := L_nCurrentTestNextSendCount to 10 do
-      begin
-        chkBox := TravelCheckBoxItem(TGroupBox(gb_testData),'chk_TestData',i);
-        if chkBox = nil then continue;
-        if chkBox.Checked then
-        begin
-          edCmd := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataCmd',i);
-          edData := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestData',i);
-          edCount := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataSendCnt',i);
-          edCurrentCount := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataCurrentCnt',i);
-
-          if edCmd = nil then continue;
-          if edData = nil then continue;
-          if edCount = nil then continue;
-          if edCurrentCount = nil then continue;
-
-          if Not(isdigit(edCount.Text)) then continue;
-          if Not(isdigit(edCurrentCount.Text)) then continue;
-          if strtoint(edCurrentCount.Text) >= strtoint(edCount.Text) then continue;
-
-          edCurrentCount.Text := inttostr(strtoint(edCurrentCount.Text) + 1);
-
-          cCmd := edCmd.text[1];
-          stDeviceID := Edit_CurrentID.Text + ComboBox_IDNO.Text;
-          SendPacket(stDeviceID,cCmd,edData.Text,Sent_Ver);
-          L_nCurrentTestNextSendCount := i + 1;
-          break;
-        end;
-      end;
-    end;
-  end;
-
-(*  if TestDataSendList.Count = 0 then
-  begin
-    TestDataSendTimer.Enabled := False;
-    Exit;
-  end;
-  stData := TestDataSendList.Strings[0];
-  TestDataSendList.Delete(0);
-  stEcuID := copy(stData,1,2);
-  Delete(stData,1,2);
-  cCmd := stData[1];
-  Delete(stData,1,1);
-
-  stDeviceID := Edit_CurrentID.Text + stEcuID;
-  SendPacket(stDeviceID,cCmd,stData,Sent_Ver)
-*)
+  TestDataSendProcess;
 end;
 
 procedure TMainForm.RzGroup7Items0Click(Sender: TObject);
@@ -27448,22 +27336,22 @@ begin
       // 카드리더 전체 조회 리스트에 BLE Bootloader 정보조회 전송
       if chk_BLEBootVersion.Checked then
       begin
-        CheckCRBLEBootVer(stDeviceID,i);		// BLE BOOT 버전 전송
+        CheckCRBLEBootVer(stDeviceID,i,chkCRBLERetry.Checked);		// BLE BOOT 버전 전송
         Delay(250);
-        CheckCRBLECustomID(stDeviceID,i);	// BLE CustomID 전송
+        CheckCRBLECustomID(stDeviceID,i,chkCRBLERetry.Checked);	// BLE CustomID 전송
         Delay(250);
-        CheckCRBLERssi(stDeviceID,i);		// BLE RSSI 전송
+        CheckCRBLERssi(stDeviceID,i,chkCRBLERetry.Checked);		// BLE RSSI 전송
         Delay(250);
       end;
 
       // 카드리더 전체 조회 리스트에 BLE 정보조회 전송
       if chk_BLEVersion.Checked then
       begin
-        CheckCRBLEVer(stDeviceID,i);		// BLE 버전 전송
+        CheckCRBLEVer(stDeviceID,i,chkCRBLERetry.Checked);		// BLE 버전 전송
         Delay(250);
-        CheckCRBLECustomID(stDeviceID,i);	// BLE CustomID 전송
+        CheckCRBLECustomID(stDeviceID,i,chkCRBLERetry.Checked);	// BLE CustomID 전송
         Delay(250);
-        CheckCRBLERssi(stDeviceID,i);		// BLE RSSI 전송
+        CheckCRBLERssi(stDeviceID,i,chkCRBLERetry.Checked);		// BLE RSSI 전송
         Delay(250);
       end;
     end else
@@ -33659,24 +33547,6 @@ begin
     end;
 end;
 
-
-function IsDigit(const C: Char): Boolean;
-begin
-  Result := (C >= '0') and (C <= '9');
-end;
-
-function ExtractNumbers(const Text: string): string;
-var
-  CharIndex: Integer;
-begin
-  Result := '';
-  for CharIndex := 1 to Length(Text) do
-  begin
-    if IsDigit(Text[CharIndex]) then
-      Result := Result + Text[CharIndex];
-  end;
-end;
-
 // 1 ----------------------
 procedure TMainForm.Edit_MaxCardLineKeyPress(Sender: TObject;
   var Key: Char);
@@ -33789,6 +33659,125 @@ begin
       Label_PortViewState.Cursor := crHandPoint;
     end;
 
+end;
+
+procedure TMainForm.TestDataSendProcess;
+var
+  stEcuID : string;
+  cCmd : char;
+  stData : string;
+  stDeviceID : string;
+  i : integer;
+  chkBox : TCheckBox;
+  edCmd : TRzEdit;
+  edData : TRzEdit;
+  edCount : TRzEdit;
+  edCurrentCount : TRzEdit;
+  bSend : Boolean;
+begin
+  if L_nCurrentTestNextSendCount > 10 then L_nCurrentTestNextSendCount := 1;
+
+  bSend := False;
+
+  for i := L_nCurrentTestNextSendCount to 10 do
+  begin
+
+    //통신 연결이 되지않아 전송을 취소하고 종료한다.
+    if not WinsockPort.Open then
+    begin
+      btn_TestDataSend.Enabled := True;
+      btn_TestSendCancel.Enabled := False;
+      TestDataSendTimer.Enabled := False;
+
+      ShowMessageBox('통신 연결이 안되었습니다.');
+      Exit;
+    end;
+
+    chkBox := TravelCheckBoxItem(TGroupBox(gb_testData),'chk_TestData',i);
+    if chkBox = nil then continue;
+    if chkBox.Checked then
+    begin
+      edCmd := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataCmd',i);
+      edData := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestData',i);
+      edCount := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataSendCnt',i);
+      edCurrentCount := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataCurrentCnt',i);
+
+      if edCmd = nil then continue;
+      if edData = nil then continue;
+      if edCount = nil then continue;
+      if edCurrentCount = nil then continue;
+
+      if Not(isdigit(edCount.Text)) then continue;
+      if Not(isdigit(edCurrentCount.Text)) then continue;
+      if strtoint(edCurrentCount.Text) >= strtoint(edCount.Text) then continue;
+
+      edCurrentCount.Text := inttostr(strtoint(edCurrentCount.Text) + 1);
+      
+      cCmd := edCmd.text[1];
+      stDeviceID := Edit_CurrentID.Text + ComboBox_IDNO.Text;
+      SendPacket(stDeviceID,cCmd,edData.Text,Sent_Ver);
+      L_nCurrentTestNextSendCount := i + 1;
+      bSend := True;
+      break;
+    end;
+  end;
+
+  if Not bSend then
+  begin
+    if L_nCurrentTestNextSendCount = 1 then  //전체 모두전송 한 경우
+    begin
+      TestDataSendTimer.Enabled := False;
+      btn_TestDataSend.Enabled := False;
+    end else   // 하나 체크한경우
+    begin
+      L_nCurrentTestNextSendCount := 1; //처음부터 다시 한번 체크 해 보자.
+      for i := L_nCurrentTestNextSendCount to 10 do
+      begin
+        chkBox := TravelCheckBoxItem(TGroupBox(gb_testData),'chk_TestData',i);
+        if chkBox = nil then continue;
+        if chkBox.Checked then
+        begin
+          edCmd := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataCmd',i);
+          edData := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestData',i);
+          edCount := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataSendCnt',i);
+          edCurrentCount := TravelRzEditItem(TGroupBox(gb_testData),'ed_TestDataCurrentCnt',i);
+
+          if edCmd = nil then continue;
+          if edData = nil then continue;
+          if edCount = nil then continue;
+          if edCurrentCount = nil then continue;
+
+          if Not(isdigit(edCount.Text)) then continue;
+          if Not(isdigit(edCurrentCount.Text)) then continue;
+          if strtoint(edCurrentCount.Text) >= strtoint(edCount.Text) then continue;
+
+          edCurrentCount.Text := inttostr(strtoint(edCurrentCount.Text) + 1);
+
+          cCmd := edCmd.text[1];
+          stDeviceID := Edit_CurrentID.Text + ComboBox_IDNO.Text;
+          SendPacket(stDeviceID,cCmd,edData.Text,Sent_Ver);
+          L_nCurrentTestNextSendCount := i + 1;
+          break;
+        end;
+      end;
+    end;
+  end;
+
+(*  if TestDataSendList.Count = 0 then
+  begin
+    TestDataSendTimer.Enabled := False;
+    Exit;
+  end;
+  stData := TestDataSendList.Strings[0];
+  TestDataSendList.Delete(0);
+  stEcuID := copy(stData,1,2);
+  Delete(stData,1,2);
+  cCmd := stData[1];
+  Delete(stData,1,1);
+
+  stDeviceID := Edit_CurrentID.Text + stEcuID;
+  SendPacket(stDeviceID,cCmd,stData,Sent_Ver)
+*)
 end;
 
 end.
