@@ -26101,7 +26101,7 @@ object MainForm: TMainForm
                         FrameHotTrack = True
                         FrameVisible = True
                         ImeName = #54620#44397#50612' '#51077#47141' '#49884#49828#53596' (IME 2000)'
-                        ItemHeight = 12
+                        ItemHeight = 0
                         ParentCtl3D = False
                         TabOnEnter = True
                         TabOrder = 0
@@ -26127,7 +26127,7 @@ object MainForm: TMainForm
                         FrameHotTrack = True
                         FrameVisible = True
                         ImeName = #54620#44397#50612' '#51077#47141' '#49884#49828#53596' (IME 2000)'
-                        ItemHeight = 12
+                        ItemHeight = 0
                         ParentCtl3D = False
                         TabOnEnter = True
                         TabOrder = 1
@@ -26147,7 +26147,7 @@ object MainForm: TMainForm
                         FrameHotTrack = True
                         FrameVisible = True
                         ImeName = #54620#44397#50612' '#51077#47141' '#49884#49828#53596' (IME 2000)'
-                        ItemHeight = 12
+                        ItemHeight = 0
                         ParentCtl3D = False
                         TabOnEnter = True
                         TabOrder = 2
@@ -26167,7 +26167,7 @@ object MainForm: TMainForm
                         FrameHotTrack = True
                         FrameVisible = True
                         ImeName = #54620#44397#50612' '#51077#47141' '#49884#49828#53596' (IME 2000)'
-                        ItemHeight = 12
+                        ItemHeight = 0
                         ParentCtl3D = False
                         TabOnEnter = True
                         TabOrder = 3
@@ -26185,7 +26185,7 @@ object MainForm: TMainForm
                         FrameHotTrack = True
                         FrameVisible = True
                         ImeName = #54620#44397#50612' '#51077#47141' '#49884#49828#53596' (IME 2000)'
-                        ItemHeight = 12
+                        ItemHeight = 0
                         ParentCtl3D = False
                         TabOnEnter = True
                         TabOrder = 4

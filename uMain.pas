@@ -27225,6 +27225,7 @@ begin
   begin
     if TravelComboBoxItem(gb_CardReader,'cmb_ReaderUse',i).ItemIndex = 1 then
     begin
+      if TravelComboBoxItem(gb_CardReader,'cmb_ReaderType',i).ItemIndex <> 1 then continue;
       // 카드리더 전체 등록 리스트에 BLE 정보등록 전송
       if chk_BLEVersion.Checked then
       begin
